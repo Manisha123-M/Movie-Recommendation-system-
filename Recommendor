@@ -1,0 +1,35 @@
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
+
+# Sample user preferences
+users = pd.DataFrame({
+    'user_id': [1, 2, 3],
+    'name': ['Alice', 'Bob', 'Charlie'],
+    'favorite_genres': ['romance comedy', 'action thriller', 'comedy drama']
+})
+
+# Sample movie dataset
+movies = pd.DataFrame({
+    'movie_id': [101, 102, 103, 104],
+    'title': ['Love Actually', 'Die Hard', 'The Hangover', 'The Notebook'],
+    'genres': ['romance comedy', 'action thriller', 'comedy', 'romance drama']
+})
+
+# Vectorize genres
+vectorizer = CountVectorizer()
+movie_genres_matrix = vectorizer.fit_transform(movies['genres'])
+
+# Recommend movies for each user
+def recommend_movies_for_user(user_pref, top_n=2):
+    user_vector = vectorizer.transform([user_pref])
+    similarity_scores = cosine_similarity(user_vector, movie_genres_matrix)
+    scores = similarity_scores.flatten()
+    top_indices = scores.argsort()[::-1][:top_n]
+    return movies.iloc[top_indices][['title', 'genres']]
+
+# Display recommendations for all users
+for _, user in users.iterrows():
+    print(f"\nRecommendations for {user['name']} ({user['favorite_genres']}):")
+    recs = recommend_movies_for_user(user['favorite_genres'])
+    print(recs.to_string(index=False))
